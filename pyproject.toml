@@ -13,6 +13,9 @@ wemake-python-styleguide = "^0.19.2"
 pytest = "^8.2.2"
 black = "^24.4.2"
 
+[tool.black]
+line-length = 100
+
 [build-system]
 requires = ["poetry-core"]
 build-backend = "poetry.core.masonry.api"
