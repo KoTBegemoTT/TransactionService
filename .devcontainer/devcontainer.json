@@ -35,6 +35,7 @@
                 "vscode-icons-team.vscode-icons",
                 "ms-python.black-formatter",
                 "Codeium.codeium",
+                "ryanluker.vscode-coverage-gutters",
                 "ms-python.mypy-type-checker"
             ]
         }
