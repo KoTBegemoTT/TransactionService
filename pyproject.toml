@@ -16,7 +16,7 @@ black = "^24.4.2"
 mypy = "^1.10.1"
 
 [tool.black]
-line-length = 100
+line-length = 88
 
 [build-system]
 requires = ["poetry-core"]
