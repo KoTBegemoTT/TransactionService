@@ -2,6 +2,10 @@
 ignore =
     # Found too short name
     WPS111,
+    # Found underscored number name pattern
+    WPS114
+    # Found Found overused expression
+    WPS204
     # Found string literal over-use
     WPS226,
     # Found `f` string
@@ -10,6 +14,8 @@ ignore =
     WPS317,
     WPS318,
     WPS319,
+    # Found magic number
+    WPS432
     # Found outer scope names shadowing
     WPS442,
     # Found imports collision
