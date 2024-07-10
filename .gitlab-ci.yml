@@ -31,4 +31,5 @@ pytest:
   stage: test
   image: $CONTAINER_IMAGE
   script:
-    - "poetry run pytest --rootdir=/workspace src/tests"
+    - ls
+    - "poetry run pytest src/tests"
