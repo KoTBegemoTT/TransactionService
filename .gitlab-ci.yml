@@ -4,6 +4,10 @@ stages:
 variables:
   CONTAINER_IMAGE: python:3.12
 
+before_script:
+  - "pip install poetry"
+  - "poetry install"
+
 flake8:
   stage: lint
   image: $CONTAINER_IMAGE
