@@ -6,29 +6,29 @@ variables:
   CONTAINER_IMAGE: python:3.12
 
 before_script:
-  - "pip install poetry"
-  - "poetry install"
+  - pip install poetry
+  - poetry install
 
 flake8:
   stage: lint
   image: $CONTAINER_IMAGE
   script:
-    - "poetry run flake8 --jobs=1 src/app"
+    - poetry run flake8 --jobs=1 src/app
 
 flake8-tests:
   stage: lint
   image: $CONTAINER_IMAGE
   script:
-    - "poetry run flake8 --config='.flake8_tests' --jobs=1 src/tests"
+    - poetry run flake8 --config='.flake8_tests' --jobs=1 src/tests
 
 mypy:
   stage: lint
   image: $CONTAINER_IMAGE
   script:
-    - "poetry run mypy src/app"
+    - poetry run mypy src/app
 
 pytest:
   stage: test
   image: $CONTAINER_IMAGE
   script:
-    - "poetry run pytest src/tests
+    - "poetry run pytest src/tests"
