@@ -2,7 +2,7 @@ stages:
   - lint
 
 variables:
-  CONTAINER_IMAGE: python:3.12
+  CONTAINER_IMAGE: base_devcontainer-app
 
 flake8:
   stage: lint
