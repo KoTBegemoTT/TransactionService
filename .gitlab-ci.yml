@@ -1,0 +1,24 @@
+stages:
+  - lint
+
+variables:
+  CONTAINER_IMAGE: python:3.12
+
+flake8:
+  stage: lint
+  image: $CONTAINER_IMAGE
+  script:
+    - "poetry run flake8 --jobs=1 src/app"
+
+
+flake8-tests:
+  stage: lint
+  image: $CONTAINER_IMAGE
+  script:
+    - "poetry run flake8 --config='.flake8_tests' --jobs=1 src/tests"
+
+mypy:
+  stage: lint
+  image: $CONTAINER_IMAGE
+  script:
+    - "poetry run mypy src/app"
