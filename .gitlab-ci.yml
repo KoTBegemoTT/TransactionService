@@ -1,5 +1,6 @@
 stages:
   - lint
+  - test
 
 variables:
   CONTAINER_IMAGE: python:3.12
@@ -14,7 +15,6 @@ flake8:
   script:
     - "poetry run flake8 --jobs=1 src/app"
 
-
 flake8-tests:
   stage: lint
   image: $CONTAINER_IMAGE
@@ -26,3 +26,9 @@ mypy:
   image: $CONTAINER_IMAGE
   script:
     - "poetry run mypy src/app"
+
+pytest:
+  stage: test
+  image: $CONTAINER_IMAGE
+  script:
+    - "poetry run pytest src/tests
