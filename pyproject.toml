@@ -18,6 +18,9 @@ mypy = "^1.10.1"
 [tool.black]
 line-length = 88
 
+[tool.pytest.ini_options]
+pythonpath = ". src"
+
 [build-system]
 requires = ["poetry-core"]
 build-backend = "poetry.core.masonry.api"

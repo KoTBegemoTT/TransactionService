@@ -31,5 +31,4 @@ pytest:
   stage: test
   image: $CONTAINER_IMAGE
   script:
-    - ls
     - "poetry run pytest src/tests"
