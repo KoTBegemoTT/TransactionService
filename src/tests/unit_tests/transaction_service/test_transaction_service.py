@@ -1,7 +1,8 @@
-import pytest
-from app.logic import TransactionService, transactions, transaction_reports
 from datetime import datetime
 
+import pytest
+
+from app.logic import TransactionService, transaction_reports, transactions
 from app.models import Transaction, TransactionType
 
 user_transaction = {
