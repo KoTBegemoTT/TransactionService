@@ -56,7 +56,7 @@ class TestCreateTransaction:
         TransactionService.create_transaction(2, 100, 'Пополнение')
         TransactionService.create_transaction(1000, 1000, 'Снятие')
 
-        assert list(transactions) == [0, 2, 1000]  # 1, 2, 1000 - id users
+        assert list(transactions) == [1, 2, 1000]  # 1, 2, 1000 - id users
         assert len(transactions[1]) == 3
         assert len(transactions[2]) == 1
         assert len(transactions[1000]) == 1
