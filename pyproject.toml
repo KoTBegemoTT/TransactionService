@@ -21,6 +21,10 @@ line-length = 88
 
 [tool.pytest.ini_options]
 pythonpath = ". src"
+testpaths = ["src/tests"]
+
+[tool.coverage.run]
+command_line = "-m pytest"
 
 [build-system]
 requires = ["poetry-core"]
