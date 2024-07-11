@@ -10,6 +10,4 @@ ignore =
     # Found using `@staticmethod`
     WPS602,
     # Found upper-case constant
-    WPS115,
-    # missing trailing comma
-    C812
+    WPS115

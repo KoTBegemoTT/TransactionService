@@ -42,7 +42,7 @@ class TransactionService:
                 date_start,
                 date_end,
                 user_transactions,
-            )
+            )  # noqa: C812
         )
 
     @staticmethod
