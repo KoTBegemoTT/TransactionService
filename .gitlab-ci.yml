@@ -33,5 +33,5 @@ pytest-and-coverage:
   script:
     - poetry run coverage run
     - poetry run coverage json
-    - poetry run coverage-threshold --file-line-coverage-min 60
+    - poetry run coverage-threshold --line-coverage-min=90  --file-line-coverage-min=100
 
