@@ -7,14 +7,14 @@ readme = "README.md"
 
 [tool.poetry.dependencies]
 python = "^3.12"
-coverage = "^7.5.4"
-coverage-threshold = "^0.4.4"
 
 [tool.poetry.group.dev.dependencies]
 wemake-python-styleguide = "^0.19.2"
 pytest = "^8.2.2"
 black = "^24.4.2"
 mypy = "^1.10.1"
+coverage = "^7.5.4"
+coverage-threshold = "^0.4.4"
 
 [tool.black]
 line-length = 88
