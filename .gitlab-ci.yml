@@ -27,8 +27,11 @@ mypy:
   script:
     - poetry run mypy src/app
 
-pytest:
+pytest-and-coverage:
   stage: test
   image: $CONTAINER_IMAGE
   script:
-    - "poetry run pytest src/tests"
+    - "poetry run coverage -m pytest src/tests"
+    - "poetry run coverage json"
+    - "poetry run coverage-threshold --file-line-coverage-min 100"
+
