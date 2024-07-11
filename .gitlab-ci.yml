@@ -31,7 +31,7 @@ pytest-and-coverage:
   stage: test
   image: $CONTAINER_IMAGE
   script:
-    - "coverage -m pytest src/tests"
-    - "coverage json"
-    - "coverage-threshold --file-line-coverage-min 100"
+    - poetry run coverage run
+    - poetry run coverage json
+    - poetry run coverage-threshold --file-line-coverage-min 100
 
