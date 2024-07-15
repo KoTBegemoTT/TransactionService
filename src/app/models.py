@@ -23,7 +23,6 @@ class Transaction:
 class TransactionReport:
     """Класс отчета о транзакциях."""
 
-    user_id: int
     date_start: datetime
     date_end: datetime
     transactions: list[Transaction]

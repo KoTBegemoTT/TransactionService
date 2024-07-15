@@ -3,7 +3,7 @@ from datetime import datetime
 from app.models import Transaction, TransactionReport, TransactionType
 
 transactions: dict[int, list[Transaction]] = {}
-transaction_reports: list[TransactionReport] = []
+transaction_reports: dict[int, list[TransactionReport]] = {}
 
 
 class TransactionService:
@@ -36,13 +36,11 @@ class TransactionService:
         user_transactions: list[Transaction],
     ) -> None:
         """Сохранение отчета о транзакциях."""
-        transaction_reports.append(
-            TransactionReport(
-                user_id,
-                date_start,
-                date_end,
-                user_transactions,
-            )  # noqa: C812
+        if user_id not in transaction_reports:
+            transaction_reports[user_id] = []
+
+        transaction_reports[user_id].append(
+            TransactionReport(date_start, date_end, user_transactions),
         )
 
     @staticmethod
@@ -52,8 +50,10 @@ class TransactionService:
         date_end: datetime,
     ) -> list[Transaction]:
         """Получение списка транзакций."""
-        if not isinstance(date_start, datetime) or not isinstance(date_end, datetime):  # noqa: E501
-            raise TypeError('date_start and date_end must be datetime')
+        if not isinstance(date_start, datetime):
+            raise TypeError('date_start must be datetime')
+        if not isinstance(date_end, datetime):
+            raise TypeError('date_end must be datetime')
 
         user_transactions = []
         for transaction in transactions[user_id]:

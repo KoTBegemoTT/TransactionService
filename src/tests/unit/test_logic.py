@@ -128,10 +128,10 @@ class TestGetTransaction:
             date_end=datetime(2124, 1, 1),
         )
 
-        assert len(transaction_reports) == 1
-        report = transaction_reports[0]
+        assert user_id in transaction_reports
+        assert len(transaction_reports[user_id]) == 1
+        report = transaction_reports[user_id][0]
 
-        assert report.user_id == user_id
         assert report.date_start == datetime(2024, 1, 1)
         assert report.date_end == datetime(2124, 1, 1)
         assert report.transactions == existing_transactions

@@ -6,6 +6,8 @@ ignore =
     WPS114
     # Found Found overused expression
     WPS204
+    # Found too many `assert` statements
+    WPS218
     # Found string literal over-use
     WPS226,
     # Found `f` string
