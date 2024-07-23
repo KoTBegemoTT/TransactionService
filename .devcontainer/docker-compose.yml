@@ -2,7 +2,7 @@ version: '3'
 
 services:
   app:
-    container_name: 'shift-python-2024-TransactionService'
+    container_name: 'TransactionService-Lebedev'
     build:
       context: app/
       dockerfile: Dockerfile
