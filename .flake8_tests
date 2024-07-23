@@ -17,7 +17,9 @@ ignore =
     WPS318,
     WPS319,
     # Found magic number
-    WPS432
+    WPS432,
+    # Found control variable used after block
+    WPS441, 
     # Found outer scope names shadowing
     WPS442,
     # Found imports collision

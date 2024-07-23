@@ -2,8 +2,8 @@ from datetime import datetime
 
 import pytest
 
-from app.logic import transaction_reports, transactions
 from app.models import Transaction, TransactionType
+from app.transaction_service.views import transaction_reports, transactions
 
 
 @pytest.fixture(autouse=True)
