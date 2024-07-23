@@ -6,16 +6,16 @@ from app.models import Transaction, TransactionReport, TransactionType
 
 
 @pytest.mark.parametrize(
-    'transaction_type',
+    'transaction_type_in',
     [
         pytest.param('Пополнение', id='deposit'),
         pytest.param('Снятие', id='withdrawal'),
     ],
 )
-def test_transaction_type_model(transaction_type):
-    transaction_type = TransactionType(transaction_type)
+def test_transaction_type_model(transaction_type_in):
+    transaction_type = TransactionType(transaction_type_in)
 
-    assert transaction_type.value == transaction_type
+    assert transaction_type.value == transaction_type_in
 
 
 @pytest.mark.parametrize(
