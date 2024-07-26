@@ -58,7 +58,7 @@ user_transaction = {
 @pytest.mark.asyncio
 async def test_create_transaction(ac, user_id, amount, transaction_type):
     response = await ac.post(
-        '/transactions/create',
+        '/transactions/create/',
         json={
             'user_id': user_id,
             'amount': amount,
@@ -87,7 +87,7 @@ async def test_get_transactions(ac, user_transaction, report_user_id):
     for new_transactions in user_transaction.values():
         for transaction in new_transactions:
             await ac.post(
-                '/transactions/create',
+                '/transactions/create/',
                 json={
                     'user_id': transaction.user_id,
                     'amount': transaction.amount,
@@ -96,7 +96,7 @@ async def test_get_transactions(ac, user_transaction, report_user_id):
             )
 
     response = await ac.post(
-        '/transactions/report',
+        '/transactions/report/',
         json={
             'user_id': report_user_id,
             'date_start': datetime(2024, 1, 1).isoformat(),
