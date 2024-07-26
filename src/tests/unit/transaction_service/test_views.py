@@ -47,8 +47,9 @@ transaction_params = [
                      id='Withdrawal_user_1000'),
     ],
 )
-def test_create_transaction(user_id, amount, transaction_type):
-    create_transaction_view(
+@pytest.mark.asyncio
+async def test_create_transaction(user_id, amount, transaction_type):
+    await create_transaction_view(
         TransactionSchema(
             user_id=user_id,
             amount=amount,
@@ -63,22 +64,23 @@ def test_create_transaction(user_id, amount, transaction_type):
     assert transaction.transaction_type == transaction_type
 
 
-def test_create_many_transactions():
-    create_transaction_view(
+@pytest.mark.asyncio
+async def test_create_many_transactions():
+    await create_transaction_view(
         TransactionSchema(
             user_id=1,
             amount=100,
             transaction_type=TransactionType.DEPOSIT,
         ),
     )
-    create_transaction_view(
+    await create_transaction_view(
         TransactionSchema(
             user_id=1,
             amount=300,
             transaction_type=TransactionType.WITHDRAWAL,
         ),
     )
-    create_transaction_view(
+    await create_transaction_view(
         TransactionSchema(
             user_id=1,
             amount=1000,
@@ -86,14 +88,14 @@ def test_create_many_transactions():
         ),
     )
 
-    create_transaction_view(
+    await create_transaction_view(
         TransactionSchema(
             user_id=2,
             amount=100,
             transaction_type=TransactionType.DEPOSIT,
         ),
     )
-    create_transaction_view(
+    await create_transaction_view(
         TransactionSchema(
             user_id=1000,
             amount=1000,
@@ -111,12 +113,13 @@ def test_create_many_transactions():
     'user_id, existing_transactions',
     transaction_params,
 )
-def test_get_transactions_found_all(user_id, existing_transactions):
+@pytest.mark.asyncio
+async def test_get_transactions_found_all(user_id, existing_transactions):
     transactions[user_id] = []
     for transaction in existing_transactions:
         transactions[user_id].append(transaction)
 
-    user_transactions = get_transactions_view(TransactionReportSchema(
+    user_transactions = await get_transactions_view(TransactionReportSchema(
         user_id=user_id,
         date_start=datetime(2024, 1, 1),
         date_end=datetime(2124, 1, 1),
@@ -129,12 +132,13 @@ def test_get_transactions_found_all(user_id, existing_transactions):
     'user_id, existing_transactions',
     transaction_params,
 )
-def test_get_transactions_not_found(user_id, existing_transactions):
+@pytest.mark.asyncio
+async def test_get_transactions_not_found(user_id, existing_transactions):
     transactions[user_id] = []
     for transaction in existing_transactions:
         transactions[user_id].append(transaction)
 
-    user_transactions = get_transactions_view(TransactionReportSchema(
+    user_transactions = await get_transactions_view(TransactionReportSchema(
         user_id=user_id,
         date_start=datetime(1000, 1, 1),
         date_end=datetime(1000, 1, 1),
@@ -147,12 +151,13 @@ def test_get_transactions_not_found(user_id, existing_transactions):
     'user_id, existing_transactions',
     transaction_params,
 )
-def test_get_transaction_report(user_id, existing_transactions):
+@pytest.mark.asyncio
+async def test_get_transaction_report(user_id, existing_transactions):
     transactions[user_id] = []
     for transaction in existing_transactions:
         transactions[user_id].append(transaction)
 
-    get_transactions_view(
+    await get_transactions_view(
         TransactionReportSchema(
             user_id=user_id,
             date_start=datetime(2024, 1, 1),
@@ -169,9 +174,10 @@ def test_get_transaction_report(user_id, existing_transactions):
     assert report.transactions == existing_transactions
 
 
-def test_get_transaction_wrong_user(add_user_1_transactions):
+@pytest.mark.asyncio
+async def test_get_transaction_wrong_user(add_user_1_transactions):
     with pytest.raises(KeyError):
-        get_transactions_view(TransactionReportSchema(
+        await get_transactions_view(TransactionReportSchema(
             user_id=2,
             date_start=datetime(2024, 1, 1),
             date_end=datetime(2124, 1, 1)),

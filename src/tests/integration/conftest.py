@@ -1,10 +1,9 @@
 import pytest
-from fastapi.testclient import TestClient
+import pytest_asyncio
+from httpx import AsyncClient
 
 from app.main import app
 from app.transaction_service.views import transaction_reports, transactions
-
-client = TestClient(app)
 
 
 @pytest.fixture(autouse=True)
@@ -13,6 +12,7 @@ def setup():
     transaction_reports.clear()
 
 
-@pytest.fixture(scope='session')
-def test_client():
-    return client
+@pytest_asyncio.fixture(scope='session')
+async def ac():
+    async with AsyncClient(app=app, base_url='http://test') as ac:
+        yield ac

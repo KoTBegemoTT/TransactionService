@@ -14,20 +14,20 @@ router = APIRouter(tags=['transactions'])
 
 
 @router.post(
-    '/create',
+    '/create/',
     status_code=status.HTTP_201_CREATED,
 )
-def create_transaction(transaction: TransactionSchema) -> None:
+async def create_transaction(transaction: TransactionSchema) -> None:
     """Создание новой транзакции."""
-    return create_transaction_view(transaction)
+    return await create_transaction_view(transaction)
 
 
 @router.post(
-    '/report',
+    '/report/',
     status_code=status.HTTP_201_CREATED,
 )
-def get_transactions(
+async def get_transactions(
     transaction_report: TransactionReportSchema,
 ) -> list[Transaction]:
     """Получение списка транзакции."""
-    return get_transactions_view(transaction_report)
+    return await get_transactions_view(transaction_report)

@@ -10,22 +10,37 @@ from app.transaction_service.views import transaction_reports, transactions
 user_transaction = {
     1:
     [
-        TransactionSchema(user_id=1, amount=100,
-                          transaction_type=TransactionType.DEPOSIT),
-        TransactionSchema(user_id=1, amount=300,
-                          transaction_type=TransactionType.WITHDRAWAL),
-        TransactionSchema(user_id=1, amount=1000,
-                          transaction_type=TransactionType.DEPOSIT),
+        TransactionSchema(
+            user_id=1,
+            amount=100,
+            transaction_type=TransactionType.DEPOSIT,
+        ),
+        TransactionSchema(
+            user_id=1,
+            amount=300,
+            transaction_type=TransactionType.WITHDRAWAL,
+        ),
+        TransactionSchema(
+            user_id=1,
+            amount=1000,
+            transaction_type=TransactionType.DEPOSIT,
+        ),
     ],
     2:
     [
-        TransactionSchema(user_id=2, amount=100,
-                          transaction_type=TransactionType.DEPOSIT),
+        TransactionSchema(
+            user_id=2,
+            amount=100,
+            transaction_type=TransactionType.DEPOSIT,
+        ),
     ],
     1000:
     [
-        TransactionSchema(user_id=1000, amount=1000,
-                          transaction_type=TransactionType.WITHDRAWAL),
+        TransactionSchema(
+            user_id=1000,
+            amount=1000,
+            transaction_type=TransactionType.WITHDRAWAL,
+        ),
     ],
 }
 
@@ -40,8 +55,9 @@ user_transaction = {
                      id='Withdrawal_user_1000'),
     ],
 )
-def test_create_transaction(test_client, user_id, amount, transaction_type):
-    response = test_client.post(
+@pytest.mark.asyncio
+async def test_create_transaction(ac, user_id, amount, transaction_type):
+    response = await ac.post(
         '/transactions/create',
         json={
             'user_id': user_id,
@@ -66,10 +82,11 @@ def test_create_transaction(test_client, user_id, amount, transaction_type):
         pytest.param(user_transaction, 1000, id='user_1000'),
     ],
 )
-def test_get_transactions(test_client, user_transaction, report_user_id):
+@pytest.mark.asyncio
+async def test_get_transactions(ac, user_transaction, report_user_id):
     for new_transactions in user_transaction.values():
         for transaction in new_transactions:
-            test_client.post(
+            await ac.post(
                 '/transactions/create',
                 json={
                     'user_id': transaction.user_id,
@@ -78,7 +95,7 @@ def test_get_transactions(test_client, user_transaction, report_user_id):
                 },
             )
 
-    response = test_client.post(
+    response = await ac.post(
         '/transactions/report',
         json={
             'user_id': report_user_id,

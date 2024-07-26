@@ -1,7 +1,7 @@
 {
-    "name": "SHIFT Python 2024",
+    "name": "Transaciton service Lebedev",
     "dockerComposeFile": "docker-compose.yml",
-    "service": "app",
+    "service": "transacitons-service",
     "workspaceFolder": "/workspace",
     "features": {
         "ghcr.io/devcontainers/features/docker-outside-of-docker:1": {},

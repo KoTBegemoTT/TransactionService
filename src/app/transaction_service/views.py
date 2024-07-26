@@ -10,7 +10,7 @@ transactions: dict[int, list[Transaction]] = {}
 transaction_reports: dict[int, list[TransactionReport]] = {}
 
 
-def create_transaction_view(transaction: TransactionSchema) -> None:
+async def create_transaction_view(transaction: TransactionSchema) -> None:
     """Создание новой транзакции."""
     transaction_bd = Transaction(
         transaction.amount, transaction.transaction_type, datetime.now(),
@@ -21,7 +21,7 @@ def create_transaction_view(transaction: TransactionSchema) -> None:
         transactions[transaction.user_id].append(transaction_bd)
 
 
-def save_report(
+async def save_report(
     report: TransactionReportSchema,
     user_transactions: list[Transaction],
 ) -> None:
@@ -38,7 +38,7 @@ def save_report(
     )
 
 
-def get_transactions_view(
+async def get_transactions_view(
     report: TransactionReportSchema,
 ) -> list[Transaction]:
     """Получение списка транзакций."""
@@ -47,6 +47,6 @@ def get_transactions_view(
         if report.date_start < transaction.date < report.date_end:
             user_transactions.append(transaction)
 
-    save_report(report, user_transactions)
+    await save_report(report, user_transactions)
 
     return user_transactions
