@@ -11,3 +11,7 @@ ignore =
     WPS602,
     # Found upper-case constant
     WPS115,
+    # Found too many module members: 8 > 7
+    WPS202,
+    # Found `f` string
+    WPS305,

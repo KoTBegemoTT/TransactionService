@@ -107,7 +107,15 @@ async def test_get_transactions(ac, user_transaction, report_user_id):
     assert response.status_code == status.HTTP_201_CREATED
     assert len(response.json()) == len(user_transaction[report_user_id])
 
-    assert len(transaction_reports) == 1
-    report = transaction_reports[report_user_id][0]
+    assert len(transaction_reports.values()) == 1
+    report = list(transaction_reports[report_user_id].values())[0]
     assert report.date_start == datetime(2024, 1, 1)
     assert report.date_end == datetime(2124, 1, 1)
+
+
+@pytest.mark.asyncio
+async def test_check_ready(ac):
+    response = await ac.get('/healthz/ready/')
+
+    assert response.status_code == status.HTTP_200_OK
+    assert response.json()

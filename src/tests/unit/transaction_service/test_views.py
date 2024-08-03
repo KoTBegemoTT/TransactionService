@@ -2,12 +2,13 @@ from datetime import datetime
 
 import pytest
 
-from app.models import Transaction, TransactionType
+from app.models import Transaction, TransactionReport, TransactionType
 from app.transaction_service.schemas import (
     TransactionReportSchema,
     TransactionSchema,
 )
 from app.transaction_service.views import (
+    concat_date,
     create_transaction_view,
     get_transactions_view,
     transaction_reports,
@@ -152,6 +153,30 @@ async def test_get_transactions_not_found(user_id, existing_transactions):
     transaction_params,
 )
 @pytest.mark.asyncio
+async def test_get_transaction_report_exists(user_id, existing_transactions):
+    date = concat_date(datetime(2024, 1, 1), datetime(2124, 1, 1))
+    transaction_reports[user_id] = {date: TransactionReport(
+        datetime(2024, 1, 1),
+        datetime(2124, 1, 1),
+        existing_transactions,
+    )}
+
+    user_transactions = await get_transactions_view(
+        TransactionReportSchema(
+            user_id=user_id,
+            date_start=datetime(2024, 1, 1),
+            date_end=datetime(2124, 1, 1),
+        ),
+    )
+
+    assert user_transactions == existing_transactions
+
+
+@pytest.mark.parametrize(
+    'user_id, existing_transactions',
+    transaction_params,
+)
+@pytest.mark.asyncio
 async def test_get_transaction_report(user_id, existing_transactions):
     transactions[user_id] = []
     for transaction in existing_transactions:
@@ -166,8 +191,8 @@ async def test_get_transaction_report(user_id, existing_transactions):
     )
 
     assert user_id in transaction_reports
-    assert len(transaction_reports[user_id]) == 1
-    report = transaction_reports[user_id][0]
+    assert len(transaction_reports[user_id].values()) == 1
+    report = list(transaction_reports[user_id].values())[0]
 
     assert report.date_start == datetime(2024, 1, 1)
     assert report.date_end == datetime(2124, 1, 1)
@@ -182,3 +207,19 @@ async def test_get_transaction_wrong_user(add_user_1_transactions):
             date_start=datetime(2024, 1, 1),
             date_end=datetime(2124, 1, 1)),
         )
+
+
+@pytest.mark.asyncio
+@pytest.mark.parametrize(
+    'date_start, date_end, concated',
+    [
+        pytest.param(
+            datetime(2024, 1, 1), datetime(2124, 1, 1),
+            '2024-01-01T00:00:00 - 2124-01-01T00:00:00', id='big_range'),
+        pytest.param(
+            datetime(2024, 1, 1), datetime(2024, 1, 1),
+            '2024-01-01T00:00:00 - 2024-01-01T00:00:00', id='small_range'),
+    ],
+)
+async def test_concat_date(date_start, date_end, concated):
+    assert concat_date(date_start, date_end) == concated

@@ -8,6 +8,8 @@ ignore =
     WPS204
     # Found too many `assert` statements
     WPS218
+    # Found too many module members: 8 > 7
+    WPS202,
     # Found string literal over-use
     WPS226,
     # Found `f` string
@@ -19,7 +21,7 @@ ignore =
     # Found magic number
     WPS432,
     # Found control variable used after block
-    WPS441, 
+    WPS441,
     # Found outer scope names shadowing
     WPS442,
     # Found imports collision
