@@ -4,7 +4,7 @@ from fastapi import FastAPI
 from app.transaction_service.urls import router as transactions_router
 
 app = FastAPI()
-app.include_router(transactions_router, prefix='/transactions')
+app.include_router(transactions_router)
 
 
 @app.get('/')

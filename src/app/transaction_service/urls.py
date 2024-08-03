@@ -13,8 +13,17 @@ from app.transaction_service.views import (
 router = APIRouter(tags=['transactions'])
 
 
+@router.get(
+    '/healthz/ready/',
+    status_code=status.HTTP_200_OK,
+)
+async def ready_check() -> bool:
+    """Проверка состояния сервиса."""
+    return True
+
+
 @router.post(
-    '/create/',
+    '/transactions/create/',
     status_code=status.HTTP_201_CREATED,
 )
 async def create_transaction(transaction: TransactionSchema) -> None:
@@ -23,7 +32,7 @@ async def create_transaction(transaction: TransactionSchema) -> None:
 
 
 @router.post(
-    '/report/',
+    '/transactions/report/',
     status_code=status.HTTP_201_CREATED,
 )
 async def get_transactions(
