@@ -15,3 +15,5 @@ ignore =
     WPS202,
     # Found `f` string
     WPS305,
+    # Found inconsistent `return` statement
+    WPS324,
