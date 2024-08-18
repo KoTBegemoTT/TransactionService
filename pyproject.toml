@@ -8,6 +8,10 @@ readme = "README.md"
 [tool.poetry.dependencies]
 python = "^3.12"
 fastapi = "^0.111.1"
+sqlalchemy = { extras = ["asyncio"], version = "^2.0.32" }
+asyncpg = "^0.29.0"
+alembic = "^1.13.2"
+pydantic-settings = "^2.4.0"
 
 [tool.poetry.group.dev.dependencies]
 wemake-python-styleguide = "^0.19.2"
@@ -16,6 +20,7 @@ mypy = "^1.10.1"
 coverage = "^7.5.4"
 coverage-threshold = "^0.4.4"
 pytest-asyncio = "^0.23.8"
+
 
 [tool.isort]
 multi_line_output = '3'
