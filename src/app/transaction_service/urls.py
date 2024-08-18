@@ -1,7 +1,9 @@
-from fastapi import APIRouter, status
+from fastapi import APIRouter, Depends, status
 
-from app.models import Transaction
+from app.db.db_helper import db_helper
+from app.db.models import UserTransaction
 from app.transaction_service.schemas import (
+    TransactionOutSchema,
     TransactionReportSchema,
     TransactionSchema,
 )
@@ -9,6 +11,7 @@ from app.transaction_service.views import (
     create_transaction_view,
     get_transactions_view,
 )
+from sqlalchemy.ext.asyncio import AsyncSession
 
 router = APIRouter(tags=['transactions'])
 
@@ -26,9 +29,12 @@ async def ready_check() -> None:
     '/transactions/create/',
     status_code=status.HTTP_201_CREATED,
 )
-async def create_transaction(transaction: TransactionSchema) -> None:
+async def create_transaction(
+    transaction: TransactionSchema,
+    session: AsyncSession = Depends(db_helper.scoped_session_dependency),
+) -> None:
     """Создание новой транзакции."""
-    return await create_transaction_view(transaction)
+    return await create_transaction_view(transaction, session)
 
 
 @router.post(
@@ -37,6 +43,6 @@ async def create_transaction(transaction: TransactionSchema) -> None:
 )
 async def get_transactions(
     transaction_report: TransactionReportSchema,
-) -> list[Transaction]:
+) -> list[TransactionOutSchema]:
     """Получение списка транзакции."""
     return await get_transactions_view(transaction_report)
