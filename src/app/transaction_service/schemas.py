@@ -1,9 +1,10 @@
 from datetime import datetime
 from enum import Enum
-from pydantic import BaseModel
+
+from pydantic import BaseModel, ConfigDict
 
 
-class TransactionType(Enum):
+class TransactionTypeSchema(Enum):
     """Тип транзакции."""
 
     DEPOSIT = 'Пополнение'
@@ -15,17 +16,18 @@ class TransactionSchema(BaseModel):
 
     user_id: int
     amount: int
-    transaction_type: TransactionType
+    transaction_type: TransactionTypeSchema
 
 
 class TransactionOutSchema(BaseModel):
     """Схема вывода транзакции."""
 
+    model_config = ConfigDict(from_attributes=True)
+
     user_id: int
     amount: float
-    transaction_type: TransactionType
+    transaction_type_id: int
     date: datetime
-
 
 
 class TransactionReportSchema(BaseModel):

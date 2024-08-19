@@ -1,7 +1,7 @@
 from fastapi import APIRouter, Depends, status
+from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.db.db_helper import db_helper
-from app.db.models import UserTransaction
 from app.transaction_service.schemas import (
     TransactionOutSchema,
     TransactionReportSchema,
@@ -11,7 +11,6 @@ from app.transaction_service.views import (
     create_transaction_view,
     get_transactions_view,
 )
-from sqlalchemy.ext.asyncio import AsyncSession
 
 router = APIRouter(tags=['transactions'])
 
@@ -43,6 +42,7 @@ async def create_transaction(
 )
 async def get_transactions(
     transaction_report: TransactionReportSchema,
+    session: AsyncSession = Depends(db_helper.scoped_session_dependency),
 ) -> list[TransactionOutSchema]:
     """Получение списка транзакции."""
-    return await get_transactions_view(transaction_report)
+    return await get_transactions_view(transaction_report, session)

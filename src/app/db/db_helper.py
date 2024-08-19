@@ -14,10 +14,16 @@ from app.config import settings
 class DatabaseHelper:
     """Подключение к базе данных."""
 
-    def __init__(self, url: str, echo: bool = False) -> None:
+    def __init__(
+        self,
+        url: str,
+        echo: bool = False,
+    ) -> None:
         self.engine = create_async_engine(
             url=url,
             echo=echo,
+            pool_size=10,
+            max_overflow=20,  # noqa: WPS432
         )
         self.session_factory = async_sessionmaker(
             bind=self.engine,

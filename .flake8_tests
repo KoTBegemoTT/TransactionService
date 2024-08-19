@@ -3,13 +3,21 @@ ignore =
     # Found too short name
     WPS111,
     # Found underscored number name pattern
-    WPS114
+    WPS114,
+    # Found module with too many imports
+    WPS201,
     # Found Found overused expression
-    WPS204
+    WPS204,
     # Found too many `assert` statements
-    WPS218
-    # Found too many module members: 8 > 7
+    WPS218,
+    # Found too many module members
     WPS202,
+    # Found too many local variables
+    WPS210,
+    # Found too many arguments
+    WPS211,
+    # Found line with high Jones Complexity
+    WPS221,
     # Found string literal over-use
     WPS226,
     # Found `f` string
@@ -18,8 +26,12 @@ ignore =
     WPS317,
     WPS318,
     WPS319,
+    # Found a line that starts with a dot
+    WPS348,
     # Found magic number
     WPS432,
+    # Found block variables overlap: session
+    WPS440,
     # Found control variable used after block
     WPS441,
     # Found outer scope names shadowing

@@ -1,225 +1,207 @@
 from datetime import datetime
 
 import pytest
+import sqlalchemy
 
-from app.models import Transaction, TransactionReport, TransactionType
 from app.transaction_service.schemas import (
+    TransactionOutSchema,
     TransactionReportSchema,
     TransactionSchema,
+    TransactionTypeSchema,
 )
 from app.transaction_service.views import (
-    concat_date,
     create_transaction_view,
+    get_report_key,
     get_transactions_view,
-    transaction_reports,
-    transactions,
+    transaction_report_cache,
 )
-
-user_transaction = {
-    'user_1': [
-        Transaction(100, TransactionType.DEPOSIT, datetime.now()),
-        Transaction(300, TransactionType.WITHDRAWAL, datetime.now()),
-        Transaction(1000, TransactionType.DEPOSIT, datetime.now()),
-    ],
-    'user_2': [
-        Transaction(100, TransactionType.WITHDRAWAL, datetime.now()),
-    ],
-    'user_1000': [
-        Transaction(1000, TransactionType.DEPOSIT, datetime.now()),
-        Transaction(1000, TransactionType.DEPOSIT, datetime.now()),
-    ],
-}
-
-
-transaction_params = [
-    pytest.param(1, user_transaction['user_1'], id='three_transactions'),
-    pytest.param(2, user_transaction['user_2'], id='one_withdrawal'),
-    pytest.param(1000, user_transaction['user_1000'], id='user_1000'),
-]
+from tests.crud_for_test import (
+    get_report_transactions,
+    get_user_reports,
+    get_user_transactions,
+)
 
 
 @pytest.mark.parametrize(
-    'user_id, amount, transaction_type',
+    'amount, transaction_type',
     [
-        pytest.param(1, 100, TransactionType.DEPOSIT, id='Deposit'),
-        pytest.param(1, 300, TransactionType.WITHDRAWAL, id='Withdrawal'),
-        pytest.param(2, 100, TransactionType.DEPOSIT, id='Deposit_user_2'),
-        pytest.param(1000, 1000, TransactionType.WITHDRAWAL,
-                     id='Withdrawal_user_1000'),
+        pytest.param(100, TransactionTypeSchema.DEPOSIT, id='Deposit'),
+        pytest.param(300, TransactionTypeSchema.WITHDRAWAL, id='Withdrawal'),
     ],
 )
 @pytest.mark.asyncio
-async def test_create_transaction(user_id, amount, transaction_type):
-    await create_transaction_view(
-        TransactionSchema(
-            user_id=user_id,
-            amount=amount,
-            transaction_type=transaction_type,
-        ),
-    )
+@pytest.mark.usefixtures('reset_db', 'clear_cache')
+async def test_create_transaction(user, amount, transaction_type, db_helper):
+    async with db_helper.session_factory() as session:
+        await create_transaction_view(
+            TransactionSchema(
+                user_id=1,
+                amount=amount,
+                transaction_type=transaction_type,
+            ),
+            session,
+        )
+        transactions = await get_user_transactions(user.id, session)
 
-    assert list(transactions) == [user_id]
-    assert len(transactions[user_id]) == 1
-    transaction = transactions[user_id][0]
+    assert len(transactions) == 1
+    transaction = transactions[0]
     assert transaction.amount == amount
-    assert transaction.transaction_type == transaction_type
+    assert transaction.user_id == user.id
 
 
 @pytest.mark.asyncio
-async def test_create_many_transactions():
-    await create_transaction_view(
-        TransactionSchema(
-            user_id=1,
-            amount=100,
-            transaction_type=TransactionType.DEPOSIT,
-        ),
-    )
-    await create_transaction_view(
-        TransactionSchema(
-            user_id=1,
-            amount=300,
-            transaction_type=TransactionType.WITHDRAWAL,
-        ),
-    )
-    await create_transaction_view(
-        TransactionSchema(
-            user_id=1,
-            amount=1000,
-            transaction_type=TransactionType.DEPOSIT,
-        ),
-    )
+@pytest.mark.usefixtures('reset_db', 'clear_cache')
+async def test_create_many_transactions(user, db_helper):
+    async with db_helper.session_factory() as session:
+        for _ in range(5):
+            await create_transaction_view(
+                TransactionSchema(
+                    user_id=user.id,
+                    amount=100,
+                    transaction_type=TransactionTypeSchema.DEPOSIT,
+                ),
+                session,
+            )
 
-    await create_transaction_view(
-        TransactionSchema(
-            user_id=2,
-            amount=100,
-            transaction_type=TransactionType.DEPOSIT,
-        ),
-    )
-    await create_transaction_view(
-        TransactionSchema(
-            user_id=1000,
-            amount=1000,
-            transaction_type=TransactionType.WITHDRAWAL,
-        ),
-    )
+        transactions = await get_user_transactions(user.id, session)
 
-    assert list(transactions) == [1, 2, 1000]  # 1, 2, 1000 - id users
-    assert len(transactions[1]) == 3
-    assert len(transactions[2]) == 1
-    assert len(transactions[1000]) == 1
+    assert len(transactions) == 5
 
 
-@pytest.mark.parametrize(
-    'user_id, existing_transactions',
-    transaction_params,
-)
+@pytest.mark.usefixtures('reset_db', 'clear_cache')
 @pytest.mark.asyncio
-async def test_get_transactions_found_all(user_id, existing_transactions):
-    transactions[user_id] = []
-    for transaction in existing_transactions:
-        transactions[user_id].append(transaction)
+async def test_get_transactions_found_all(
+    user_and_transactions, db_helper,
+):
+    user, transactions_out = user_and_transactions
 
-    user_transactions = await get_transactions_view(TransactionReportSchema(
-        user_id=user_id,
-        date_start=datetime(2024, 1, 1),
-        date_end=datetime(2124, 1, 1),
-    ))
+    async with db_helper.session_factory() as session:
+        user_transactions = await get_transactions_view(
+            TransactionReportSchema(
+                user_id=user.id,
+                date_start=datetime(2024, 1, 1),
+                date_end=datetime(2124, 1, 1),
+            ),
+            session,
+        )
 
-    assert user_transactions == existing_transactions
+    assert user_transactions == transactions_out
 
 
-@pytest.mark.parametrize(
-    'user_id, existing_transactions',
-    transaction_params,
-)
+@pytest.mark.usefixtures('reset_db', 'clear_cache')
 @pytest.mark.asyncio
-async def test_get_transactions_not_found(user_id, existing_transactions):
-    transactions[user_id] = []
-    for transaction in existing_transactions:
-        transactions[user_id].append(transaction)
+async def test_get_transactions_not_found(user_and_transactions, db_helper):
+    user, transactions_out = user_and_transactions
 
-    user_transactions = await get_transactions_view(TransactionReportSchema(
-        user_id=user_id,
-        date_start=datetime(1000, 1, 1),
-        date_end=datetime(1000, 1, 1),
-    ))
+    async with db_helper.session_factory() as session:
+        user_transactions = await get_transactions_view(
+            TransactionReportSchema(
+                user_id=user.id,
+                date_start=datetime(1000, 1, 1),
+                date_end=datetime(1000, 1, 1),
+            ),
+            session,
+        )
 
     assert not user_transactions
 
 
-@pytest.mark.parametrize(
-    'user_id, existing_transactions',
-    transaction_params,
-)
+@pytest.mark.usefixtures('reset_db', 'clear_cache')
 @pytest.mark.asyncio
-async def test_get_transaction_report_exists(user_id, existing_transactions):
-    date = concat_date(datetime(2024, 1, 1), datetime(2124, 1, 1))
-    transaction_reports[user_id] = {date: TransactionReport(
-        datetime(2024, 1, 1),
-        datetime(2124, 1, 1),
-        existing_transactions,
-    )}
-
-    user_transactions = await get_transactions_view(
-        TransactionReportSchema(
-            user_id=user_id,
-            date_start=datetime(2024, 1, 1),
-            date_end=datetime(2124, 1, 1),
+async def test_get_transaction_report_exists_in_cache(db_helper):
+    cashed_transactions = [
+        TransactionOutSchema(
+            user_id=1,
+            amount=100,
+            transaction_type_id=1,
+            date=datetime.now(),
         ),
-    )
+        TransactionOutSchema(
+            user_id=1,
+            amount=300,
+            transaction_type_id=2,
+            date=datetime.now(),
+        ),
+    ]
 
-    assert user_transactions == existing_transactions
+    report_key = get_report_key(1, datetime(2024, 1, 1), datetime(2124, 1, 1))
+
+    transaction_report_cache[report_key] = cashed_transactions
+
+    async with db_helper.session_factory() as session:
+        user_transactions = await get_transactions_view(
+            TransactionReportSchema(
+                user_id=1,
+                date_start=datetime(2024, 1, 1),
+                date_end=datetime(2124, 1, 1),
+            ),
+            session,
+        )
+
+    assert user_transactions == cashed_transactions
 
 
-@pytest.mark.parametrize(
-    'user_id, existing_transactions',
-    transaction_params,
-)
+@pytest.mark.usefixtures('reset_db', 'clear_cache')
 @pytest.mark.asyncio
-async def test_get_transaction_report(user_id, existing_transactions):
-    transactions[user_id] = []
-    for transaction in existing_transactions:
-        transactions[user_id].append(transaction)
+async def test_get_transaction_report(user_and_transactions, db_helper):
+    user, transactions_out = user_and_transactions
 
-    await get_transactions_view(
-        TransactionReportSchema(
-            user_id=user_id,
-            date_start=datetime(2024, 1, 1),
-            date_end=datetime(2124, 1, 1),
-        ),
-    )
+    async with db_helper.session_factory() as session:
+        await get_transactions_view(
+            TransactionReportSchema(
+                user_id=user.id,
+                date_start=datetime(2024, 1, 1),
+                date_end=datetime(2124, 1, 1),
+            ),
+            session,
+        )
 
-    assert user_id in transaction_reports
-    assert len(transaction_reports[user_id].values()) == 1
-    report = list(transaction_reports[user_id].values())[0]
+        reports = await get_user_reports(user.id, session)
+        report_transactions = await get_report_transactions(user.id, session)
+
+    assert len(transaction_report_cache) == 1
+    assert len(reports) == 1
+    report = reports[0]
 
     assert report.date_start == datetime(2024, 1, 1)
     assert report.date_end == datetime(2124, 1, 1)
-    assert report.transactions == existing_transactions
+    assert len(report_transactions) == len(transactions_out)
 
 
 @pytest.mark.asyncio
-async def test_get_transaction_wrong_user(add_user_1_transactions):
-    with pytest.raises(KeyError):
-        await get_transactions_view(TransactionReportSchema(
-            user_id=2,
-            date_start=datetime(2024, 1, 1),
-            date_end=datetime(2124, 1, 1)),
-        )
+@pytest.mark.usefixtures('reset_db', 'clear_cache')
+async def test_get_transaction_wrong_user(db_helper):
+    async with db_helper.session_factory() as session:
+        with pytest.raises(sqlalchemy.exc.IntegrityError):
+            await get_transactions_view(
+                TransactionReportSchema(
+                    user_id=1000,
+                    date_start=datetime(2024, 1, 1),
+                    date_end=datetime(2124, 1, 1),
+                ),
+                session,
+            )
 
 
 @pytest.mark.asyncio
 @pytest.mark.parametrize(
-    'date_start, date_end, concated',
+    'user_id, date_start, date_end, concated',
     [
         pytest.param(
-            datetime(2024, 1, 1), datetime(2124, 1, 1),
-            '2024-01-01T00:00:00 - 2124-01-01T00:00:00', id='big_range'),
+            1,
+            datetime(2024, 1, 1),
+            datetime(2124, 1, 1),
+            '1_2024-01-01T00:00:00_2124-01-01T00:00:00',
+            id='big_range',
+        ),
         pytest.param(
-            datetime(2024, 1, 1), datetime(2024, 1, 1),
-            '2024-01-01T00:00:00 - 2024-01-01T00:00:00', id='small_range'),
+            2,
+            datetime(2024, 1, 1),
+            datetime(2024, 1, 1),
+            '2_2024-01-01T00:00:00_2024-01-01T00:00:00',
+            id='small_range',
+        ),
     ],
 )
-async def test_concat_date(date_start, date_end, concated):
-    assert concat_date(date_start, date_end) == concated
+async def test_get_report_key(user_id, date_start, date_end, concated):
+    assert get_report_key(user_id, date_start, date_end) == concated

@@ -7,6 +7,8 @@ ignore =
     DAR401,
     # Missing docstring in public package
     D104,
+    # Missing docstring in __init__
+    D107,
     # Found using `@staticmethod`
     WPS602,
     # Found upper-case constant
@@ -15,5 +17,15 @@ ignore =
     WPS202,
     # Found `f` string
     WPS305,
+    # Found implicit `.get()` dict usage
+    WPS529,
     # Found inconsistent `return` statement
     WPS324,
+    # Found variables that are only used for `return`
+    WPS331,
+    # Found a line that starts with a dot
+    WPS348,
+    #  Found complex default value
+    WPS404,
+    # Do not perform function calls in argument defaults
+    B008,

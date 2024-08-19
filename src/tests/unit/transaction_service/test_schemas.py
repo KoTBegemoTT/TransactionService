@@ -3,10 +3,10 @@ from datetime import datetime
 import pytest
 from pydantic_core import ValidationError
 
-from app.models import TransactionType
 from app.transaction_service.schemas import (
     TransactionReportSchema,
     TransactionSchema,
+    TransactionTypeSchema,
 )
 
 
@@ -17,23 +17,15 @@ from app.transaction_service.schemas import (
             {
                 'user_id': 1,
                 'amount': 100,
-                'transaction_type': TransactionType.DEPOSIT,
+                'transaction_type': TransactionTypeSchema.DEPOSIT,
             },
             id='user_1',
         ),
         pytest.param(
             {
-                'user_id': 2,
-                'amount': 100.73,
-                'transaction_type': TransactionType.DEPOSIT,
-            },
-            id='float_amount',
-        ),
-        pytest.param(
-            {
                 'user_id': 1000,
                 'amount': 1000,
-                'transaction_type': TransactionType.WITHDRAWAL,
+                'transaction_type': TransactionTypeSchema.WITHDRAWAL,
             },
             id='withdrawl_user_1000',
         ),
@@ -53,7 +45,7 @@ def test_transaction_schema(pyload):
         (
             {
                 'amount': 100,
-                'transaction_type': TransactionType.DEPOSIT,
+                'transaction_type': TransactionTypeSchema.DEPOSIT,
             },
             'user_id',
             'Field required',
@@ -63,7 +55,7 @@ def test_transaction_schema(pyload):
         (
             {
                 'user_id': 1,
-                'transaction_type': TransactionType.DEPOSIT,
+                'transaction_type': TransactionTypeSchema.DEPOSIT,
             },
             'amount',
             'Field required',
@@ -84,7 +76,7 @@ def test_transaction_schema(pyload):
             {
                 'user_id': None,
                 'amount': 100,
-                'transaction_type': TransactionType.DEPOSIT,
+                'transaction_type': TransactionTypeSchema.DEPOSIT,
             },
             'user_id',
             'Input should be a valid integer',
@@ -95,10 +87,10 @@ def test_transaction_schema(pyload):
             {
                 'user_id': 1,
                 'amount': None,
-                'transaction_type': TransactionType.DEPOSIT,
+                'transaction_type': TransactionTypeSchema.DEPOSIT,
             },
             'amount',
-            'Input should be a valid number',
+            'Input should be a valid integer',
             id='amount_none',
         ),
         pytest.param

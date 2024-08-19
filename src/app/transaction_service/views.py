@@ -1,16 +1,18 @@
 from datetime import datetime
 
+from fastapi import HTTPException, status
 from sqlalchemy import select
+from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy.orm import selectinload
 
-from app.db.models import UserTransaction, TransactionReport, TransactionType
+from app.db.models import TransactionReport, TransactionType, UserTransaction
 from app.transaction_service.schemas import (
     TransactionOutSchema,
     TransactionReportSchema,
     TransactionSchema,
 )
-from sqlalchemy.ext.asyncio import AsyncSession
 
-transaction_report_cache: dict[int, dict[str, TransactionReport]] = {}
+transaction_report_cache: dict[str, list[TransactionOutSchema]] = {}
 transaction_type_id_cache: dict[str, int] = {}
 
 
@@ -27,12 +29,12 @@ async def create_transation_type(
 
 async def get_transation_type_by_name(
     name: str,
-    session: AsyncSession
+    session: AsyncSession,
 ) -> TransactionType | None:
     """Получение типа транзакции по имени."""
     return await session.scalar(
         select(TransactionType)
-        .where(TransactionType.name == name)
+        .where(TransactionType.name == name),
     )
 
 
@@ -75,7 +77,6 @@ async def create_user_transaction(
     session: AsyncSession,
 ) -> UserTransaction:
     """Создание новой транзакции."""
-
     transaction_bd = UserTransaction(
         user_id=user_id,
         amount=amount,
@@ -97,7 +98,7 @@ async def create_transaction_view(
         transaction.transaction_type.value,
         session,
     )
-    
+
     await create_user_transaction(
         transaction.user_id,
         transaction.amount,
@@ -108,50 +109,131 @@ async def create_transaction_view(
 
 def concat_date(date_start: datetime, date_end: datetime) -> str:
     """Соединяет даты в строку."""
-    return f'{date_start.isoformat()} - {date_end.isoformat()}'
+    return f'{date_start.isoformat()}_{date_end.isoformat()}'
+
+
+def get_report_key(
+    user_id: int, date_start: datetime, date_end: datetime,
+) -> str:
+    """Соединяет данные в строку."""
+    dates = concat_date(date_start, date_end)
+    return f'{user_id}_{dates}'
+
+
+async def create_report(
+    user_id: int,
+    date_start: datetime,
+    date_end: datetime,
+    session: AsyncSession,
+) -> TransactionReport:
+    """Создание отчета о транзакциях."""
+    report = TransactionReport(
+        user_id=user_id,
+        date_start=date_start,
+        date_end=date_end,
+    )
+    session.add(report)
+    await session.commit()
+    return report
+
+
+async def create_report_transaction_relations(
+    report_id: int,
+    user_transactions: list[UserTransaction],
+    session: AsyncSession,
+) -> None:
+    """Сохранение транзакций."""
+    report = await session.scalar(
+        select(TransactionReport)
+        .where(TransactionReport.id == report_id)
+        .options(
+            selectinload(TransactionReport.transactions),
+        ),
+    )
+    if report is None:
+        raise HTTPException(status.HTTP_404_NOT_FOUND, 'Отчет не найден')
+
+    report.transactions.extend(user_transactions)
+
+    await session.commit()
 
 
 async def save_report(
+    report_in: TransactionReportSchema,
+    user_transactions: list[UserTransaction],
+    session: AsyncSession,
+) -> None:
+    """Сохранение отчета о транзакциях."""
+    report = await create_report(
+        report_in.user_id,
+        report_in.date_start,
+        report_in.date_end,
+        session,
+    )
+
+    await create_report_transaction_relations(
+        report.id, user_transactions, session,
+    )
+
+
+async def get_user_transactions_in_period(
+    user_id: int,
+    date_start: datetime,
+    date_end: datetime,
+    session: AsyncSession,
+) -> list[UserTransaction]:
+    """Получение списка транзакций за период."""
+    transactions = await session.scalars(
+        select(UserTransaction)
+        .where(UserTransaction.user_id == user_id)
+        .where(UserTransaction.date.between(date_start, date_end)),
+    )
+
+    return list(transactions)
+
+
+async def get_trasactions_form_cache(
+    report: TransactionReportSchema,
+) -> list[TransactionOutSchema] | None:
+    """Поиск отчета о транзакциях."""
+    report_key = get_report_key(
+        report.user_id, report.date_start, report.date_end,
+    )
+    return transaction_report_cache.get(report_key, None)
+
+
+async def save_report_cache(
     report: TransactionReportSchema,
     user_transactions: list[TransactionOutSchema],
 ) -> None:
     """Сохранение отчета о транзакциях."""
-    if report.user_id not in transaction_reports:
-        transaction_reports[report.user_id] = {}
-
-    report_dates = concat_date(report.date_start, report.date_end)
-    transaction_reports[report.user_id][report_dates] = TransactionReport(
-        report.date_start,
-        report.date_end,
-        user_transactions,
+    report_key = get_report_key(
+        report.user_id, report.date_start, report.date_end,
     )
-
-
-async def found_report(
-    report: TransactionReportSchema,
-) -> TransactionReport | None:
-    """Поиск отчета о транзакциях."""
-    if report.user_id not in transaction_reports:
-        return None
-
-    user_reports = transaction_reports[report.user_id]
-    report_dates = concat_date(report.date_start, report.date_end)
-    return user_reports.get(report_dates, None)
+    transaction_report_cache[report_key] = user_transactions
 
 
 async def get_transactions_view(
     report: TransactionReportSchema,
+    session: AsyncSession,
 ) -> list[TransactionOutSchema]:
     """Получение списка транзакций."""
-    existing_report = await found_report(report)
-    if existing_report:
-        return existing_report.transactions
+    cashed_transactions = await get_trasactions_form_cache(report)
+    if cashed_transactions is not None:
+        return cashed_transactions
 
-    user_transactions = []
-    for transaction in transactions[report.user_id]:
-        if report.date_start < transaction.date < report.date_end:
-            user_transactions.append(transaction)
+    user_transactions_orm = await get_user_transactions_in_period(
+        report.user_id,
+        report.date_start,
+        report.date_end,
+        session,
+    )
 
-    await save_report(report, user_transactions)
+    await save_report(report, user_transactions_orm, session)
+    user_transactions_out = [
+        TransactionOutSchema.model_validate(transaction)
+        for transaction in user_transactions_orm
+    ]
+    await save_report_cache(report, user_transactions_out)
 
-    return user_transactions
+    return user_transactions_out
