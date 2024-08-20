@@ -25,7 +25,7 @@ class TransactionOutSchema(BaseModel):
     model_config = ConfigDict(from_attributes=True)
 
     user_id: int
-    amount: float
+    amount: int
     transaction_type_id: int
     date: datetime
 
