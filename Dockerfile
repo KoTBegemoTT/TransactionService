@@ -17,6 +17,8 @@ COPY poetry.lock pyproject.toml /service/
 RUN poetry install --without dev --no-interaction --no-ansi
 
 COPY ./src/app /service/app
+COPY ./alembic /service/alembic
+COPY alembic.ini /service/alembic.ini
 
 EXPOSE 8002
 
