@@ -10,7 +10,6 @@ class Settings(BaseSettings):
     db_host: str = 'host.docker.internal'
     db_port: str = '5432'
     db_name: str = 'credit_card'
-    db_url: str = f'postgresql+asyncpg://{db_user}:{db_password}@{db_host}:{db_port}/{db_name}'  # noqa: E501, WPS221
     db_echo: bool = True
 
     @property
