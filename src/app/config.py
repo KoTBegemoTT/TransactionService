@@ -11,6 +11,7 @@ class Settings(BaseSettings):
     db_port: str = '5432'
     db_name: str = 'credit_card'
     db_echo: bool = True
+    db_schema: str = 'lebedev_schema'
 
     @property
     def db_url(self) -> str:

@@ -8,7 +8,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.db.db_helper import DatabaseHelper
 from app.db.db_helper import db_helper as db_session_helper
-from app.db.models import Base, TransactionType, User, UserTransaction
+from app.db.models import BaseTable, TransactionType, User, UserTransaction
 from app.main import app
 from app.transaction_service.schemas import TransactionOutSchema
 from app.transaction_service.views import (
@@ -32,10 +32,10 @@ app.dependency_overrides[db_session_helper.scoped_session_dependency] = (
 @pytest_asyncio.fixture()
 async def reset_db():
     async with test_db_helper.engine.begin() as conn:
-        await conn.run_sync(Base.metadata.create_all)
+        await conn.run_sync(BaseTable.metadata.create_all)
     yield
     async with test_db_helper.engine.begin() as conn:
-        await conn.run_sync(Base.metadata.drop_all)
+        await conn.run_sync(BaseTable.metadata.drop_all)
 
 
 @pytest.fixture(scope='session')
