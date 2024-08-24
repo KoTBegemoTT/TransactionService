@@ -1,0 +1,45 @@
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: lebedev-migration
+spec:
+  ttlSecondsAfterFinished: 100
+  template:
+    spec:
+      restartPolicy: Never
+      containers:
+        - name: lebedev-migration-container
+          image: kotbegemott/transaction_service:4
+          command: ['alembic', 'upgrade', 'head']
+          env:
+            - name: DB_HOST
+              valueFrom:
+                configMapKeyRef:
+                  name: lebedev-database-configmap
+                  key: db_host
+            - name: DB_PORT
+              valueFrom:
+                configMapKeyRef:
+                  name: lebedev-database-configmap
+                  key: db_port
+            - name: DB_SCHEMA
+              valueFrom:
+                configMapKeyRef:
+                  name: lebedev-database-configmap
+                  key: db_schema
+
+            - name: DB_USER
+              valueFrom:
+                configMapKeyRef:
+                  name: lebedev-database-configmap
+                  key: db_user
+            - name: DB_PASSWORD
+              valueFrom:
+                configMapKeyRef:
+                  name: lebedev-database-configmap
+                  key: db_password
+            - name: DB_NAME
+              valueFrom:
+                configMapKeyRef:
+                  name: lebedev-database-configmap
+                  key: db_name

@@ -1,5 +1,5 @@
 import uvicorn
-from fastapi import FastAPI
+from fastapi import FastAPI, status
 
 from app.transaction_service.urls import router as transactions_router
 
@@ -11,6 +11,18 @@ app.include_router(transactions_router)
 async def root():
     """Стартовая страница."""
     return {'message': 'Hello World'}
+
+
+@app.get('/ready', status_code=status.HTTP_200_OK)
+async def ready_check():
+    """Проверка состояния сервиса."""
+    return {'message': 'Service is ready'}
+
+
+@app.get('/live', status_code=status.HTTP_200_OK)
+async def live_check():
+    """Проверка состояния сервиса."""
+    return {'message': 'Service is live'}
 
 
 if __name__ == '__main__':
