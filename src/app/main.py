@@ -1,10 +1,25 @@
+from contextlib import asynccontextmanager
+
 import uvicorn
 from fastapi import FastAPI, status
+from starlette.middleware.base import BaseHTTPMiddleware
 
+from app.external.jaeger import initialize_jaeger_tracer
+from app.middleware import tracing_middleware
 from app.transaction_service.urls import router as transactions_router
 
-app = FastAPI()
-app.include_router(transactions_router)
+
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    """Настройка при запуске и остановке приложения."""
+    initialize_jaeger_tracer()
+    yield
+
+
+app = FastAPI(lifespan=lifespan)
+app.include_router(transactions_router, prefix='/api')
+
+app.add_middleware(BaseHTTPMiddleware, dispatch=tracing_middleware)
 
 
 @app.get('/')

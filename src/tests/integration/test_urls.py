@@ -20,7 +20,7 @@ async def test_create_transaction(
     ac, user, amount, transaction_type, db_helper,
 ):
     response = await ac.post(
-        '/transactions/create/',
+        'api/transactions/create/',
         json={
             'user_id': user.id,
             'amount': amount,
@@ -44,7 +44,7 @@ async def test_get_transactions(ac, user_and_transactions):
     user, transactions = user_and_transactions
 
     response = await ac.post(
-        '/transactions/report/',
+        'api/transactions/report/',
         json={
             'user_id': user.id,
             'date_start': datetime(2024, 1, 1).isoformat(),
@@ -59,6 +59,6 @@ async def test_get_transactions(ac, user_and_transactions):
 
 @pytest.mark.asyncio
 async def test_check_ready(ac):
-    response = await ac.get('/healthz/ready/')
+    response = await ac.get('api/healthz/ready/')
 
     assert response.status_code == status.HTTP_200_OK
