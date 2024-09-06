@@ -36,6 +36,10 @@ spec:
           resources:
             {{- toYaml .Values.resources | nindent 12 }}
           env:
+            - name: SERVICE_NAME
+              value: "{{ .Values.service_name }}"
+
+          # secret
             - name: DB_USER
               valueFrom:
                 secretKeyRef:
@@ -52,6 +56,7 @@ spec:
                   name: {{ .Values.db_secret.name }}
                   key: db_name
 
+            # Configmap
             - name: DB_HOST
               valueFrom:
                 configMapKeyRef:
@@ -67,3 +72,15 @@ spec:
                 configMapKeyRef:
                     name: {{ .Values.db_cofigmap.name }}
                     key: db_schema
+
+            # Jaeger
+            - name: JAEGER_HOST
+              valueFrom:
+                configMapKeyRef:
+                  name: {{ .Values.jaeger_cofigmap.name }}
+                  key: jaeger_host
+            - name: JAEGER_PORT
+              valueFrom:
+                configMapKeyRef:
+                  name: {{ .Values.jaeger_cofigmap.name }}
+                  key: jaeger_port

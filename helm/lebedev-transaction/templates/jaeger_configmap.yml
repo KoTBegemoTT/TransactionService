@@ -1,0 +1,9 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{ .Values.jaeger_cofigmap.name }}
+  labels:
+    {{- include "lebedev-transaction.labels" . | nindent 4 }}
+data:
+  jaeger_host: {{ .Values.jaeger_cofigmap.data.jaeger_host }}
+  jaeger_port: {{ .Values.jaeger_cofigmap.data.jaeger_port | toString }}
