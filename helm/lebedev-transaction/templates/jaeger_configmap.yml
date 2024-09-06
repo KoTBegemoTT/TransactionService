@@ -5,5 +5,5 @@ metadata:
   labels:
     {{- include "lebedev-transaction.labels" . | nindent 4 }}
 data:
-  jaeger_host: {{ .Values.jaeger_cofigmap.data.jaeger_host }}
-  jaeger_port: {{ .Values.jaeger_cofigmap.data.jaeger_port | toString }}
+  jaeger_agent_host: {{ .Values.jaeger_cofigmap.data.jaeger_agent_host }}
+  jaeger_agent_port: {{ .Values.jaeger_cofigmap.data.jaeger_agent_port | toString }}

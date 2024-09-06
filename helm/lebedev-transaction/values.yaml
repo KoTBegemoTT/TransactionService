@@ -8,7 +8,8 @@ image:
   repository: kotbegemott/transaction_service
   pullPolicy: IfNotPresent
   # Overrides the image tag whose default is the chart appVersion.
-  tag: "5"
+  tag: "6"
+
 
 imagePullSecrets: []
 nameOverride: ""
@@ -127,7 +128,7 @@ db_secret:
 jaeger_cofigmap:
   name: lebedev-jaeger-configmap
   data:
-    jaeger_host: "infra-jaeger-agent"
-    jaeger_port: "'6831'"
+    jaeger_agent_host: "infra-jaeger-agent"
+    jaeger_agent_port: "'6831'"
 
 service_name: 'lebedev-transaction-service'

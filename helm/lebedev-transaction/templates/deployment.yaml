@@ -74,13 +74,13 @@ spec:
                     key: db_schema
 
             # Jaeger
-            - name: JAEGER_HOST
+            - name: JAEGER_AGENT_HOST
               valueFrom:
                 configMapKeyRef:
                   name: {{ .Values.jaeger_cofigmap.name }}
-                  key: jaeger_host
-            - name: JAEGER_PORT
+                  key: jaeger_agent_host
+            - name: JAEGER_AGENT_PORT
               valueFrom:
                 configMapKeyRef:
                   name: {{ .Values.jaeger_cofigmap.name }}
-                  key: jaeger_port
+                  key: jaeger_agent_port
