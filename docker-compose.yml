@@ -1,0 +1,21 @@
+services:
+    transaction:
+        build: .
+        command: "uvicorn app.main:app --reload --workers 1 --host 0.0.0.0 --port 8002"
+        ports:
+            - 8002:8002
+
+    jaeger:
+        image: jaegertracing/all-in-one
+        ports:
+        - "6831:6831/udp"
+        - "16686:16686"
+        
+    redis:
+        image: redis:6
+        volumes:
+            # - ./redis/data:/data
+            - ./redis/redis.conf:/usr/local/etc/redis/redis.conf
+        expose:
+            - 6379
+        command: redis-server /usr/local/etc/redis/redis.conf

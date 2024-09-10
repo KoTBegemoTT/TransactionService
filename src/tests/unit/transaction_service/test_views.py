@@ -1,4 +1,5 @@
 from datetime import datetime
+from unittest.mock import Mock
 
 import pytest
 import sqlalchemy
@@ -13,8 +14,8 @@ from app.transaction_service.views import (
     create_transaction_view,
     get_report_key,
     get_transactions_view,
-    transaction_report_cache,
 )
+from app.utils import json_nested_dump
 from tests.crud_for_test import (
     get_report_transactions,
     get_user_reports,
@@ -30,8 +31,10 @@ from tests.crud_for_test import (
     ],
 )
 @pytest.mark.asyncio
-@pytest.mark.usefixtures('reset_db', 'clear_cache')
-async def test_create_transaction(user, amount, transaction_type, db_helper):
+@pytest.mark.usefixtures('reset_db')
+async def test_create_transaction(
+    user, amount, transaction_type, db_helper, redis_mock,
+):
     async with db_helper.session_factory() as session:
         await create_transaction_view(
             TransactionSchema(
@@ -40,6 +43,7 @@ async def test_create_transaction(user, amount, transaction_type, db_helper):
                 transaction_type=transaction_type,
             ),
             session,
+            redis_mock,
         )
         transactions = await get_user_transactions(user.id, session)
 
@@ -50,8 +54,8 @@ async def test_create_transaction(user, amount, transaction_type, db_helper):
 
 
 @pytest.mark.asyncio
-@pytest.mark.usefixtures('reset_db', 'clear_cache')
-async def test_create_many_transactions(user, db_helper):
+@pytest.mark.usefixtures('reset_db')
+async def test_create_many_transactions(user, db_helper, redis_mock):
     async with db_helper.session_factory() as session:
         for _ in range(5):
             await create_transaction_view(
@@ -61,6 +65,7 @@ async def test_create_many_transactions(user, db_helper):
                     transaction_type=TransactionTypeSchema.DEPOSIT,
                 ),
                 session,
+                redis_mock,
             )
 
         transactions = await get_user_transactions(user.id, session)
@@ -68,10 +73,10 @@ async def test_create_many_transactions(user, db_helper):
     assert len(transactions) == 5
 
 
-@pytest.mark.usefixtures('reset_db', 'clear_cache')
+@pytest.mark.usefixtures('reset_db')
 @pytest.mark.asyncio
 async def test_get_transactions_found_all(
-    user_and_transactions, db_helper,
+    user_and_transactions, db_helper, redis_mock,
 ):
     user, transactions_out = user_and_transactions
 
@@ -83,14 +88,17 @@ async def test_get_transactions_found_all(
                 date_end=datetime(2124, 1, 1),
             ),
             session,
+            redis_mock,
         )
 
     assert user_transactions == transactions_out
 
 
-@pytest.mark.usefixtures('reset_db', 'clear_cache')
+@pytest.mark.usefixtures('reset_db')
 @pytest.mark.asyncio
-async def test_get_transactions_not_found(user_and_transactions, db_helper):
+async def test_get_transactions_not_found(
+    user_and_transactions, db_helper, redis_mock,
+):
     user, transactions_out = user_and_transactions
 
     async with db_helper.session_factory() as session:
@@ -101,14 +109,15 @@ async def test_get_transactions_not_found(user_and_transactions, db_helper):
                 date_end=datetime(1000, 1, 1),
             ),
             session,
+            redis_mock,
         )
 
     assert not user_transactions
 
 
-@pytest.mark.usefixtures('reset_db', 'clear_cache')
+@pytest.mark.usefixtures('reset_db')
 @pytest.mark.asyncio
-async def test_get_transaction_report_exists_in_cache(db_helper):
+async def test_get_transaction_report_exists_in_cache(db_helper, redis_mock):
     cashed_transactions = [
         TransactionOutSchema(
             user_id=1,
@@ -124,9 +133,9 @@ async def test_get_transaction_report_exists_in_cache(db_helper):
         ),
     ]
 
-    report_key = get_report_key(1, datetime(2024, 1, 1), datetime(2124, 1, 1))
-
-    transaction_report_cache[report_key] = cashed_transactions
+    redis_mock.get_report_transaction = Mock(
+        return_value=json_nested_dump(cashed_transactions),
+    )
 
     async with db_helper.session_factory() as session:
         user_transactions = await get_transactions_view(
@@ -136,14 +145,20 @@ async def test_get_transaction_report_exists_in_cache(db_helper):
                 date_end=datetime(2124, 1, 1),
             ),
             session,
+            redis_mock,
         )
 
-    assert user_transactions == cashed_transactions
+    restored_transactions = [
+        TransactionOutSchema.model_validate(t) for t in user_transactions
+    ]
+    assert restored_transactions == cashed_transactions
 
 
-@pytest.mark.usefixtures('reset_db', 'clear_cache')
+@pytest.mark.usefixtures('reset_db')
 @pytest.mark.asyncio
-async def test_get_transaction_report(user_and_transactions, db_helper):
+async def test_get_transaction_report(
+    user_and_transactions, db_helper, redis_mock,
+):
     user, transactions_out = user_and_transactions
 
     async with db_helper.session_factory() as session:
@@ -154,12 +169,13 @@ async def test_get_transaction_report(user_and_transactions, db_helper):
                 date_end=datetime(2124, 1, 1),
             ),
             session,
+            redis_mock,
         )
 
         reports = await get_user_reports(user.id, session)
         report_transactions = await get_report_transactions(user.id, session)
 
-    assert len(transaction_report_cache) == 1
+    assert len(redis_mock.get_cash()) == 1
     assert len(reports) == 1
     report = reports[0]
 
@@ -169,8 +185,8 @@ async def test_get_transaction_report(user_and_transactions, db_helper):
 
 
 @pytest.mark.asyncio
-@pytest.mark.usefixtures('reset_db', 'clear_cache')
-async def test_get_transaction_wrong_user(db_helper):
+@pytest.mark.usefixtures('reset_db')
+async def test_get_transaction_wrong_user(db_helper, redis_mock):
     async with db_helper.session_factory() as session:
         with pytest.raises(sqlalchemy.exc.IntegrityError):
             await get_transactions_view(
@@ -180,6 +196,7 @@ async def test_get_transaction_wrong_user(db_helper):
                     date_end=datetime(2124, 1, 1),
                 ),
                 session,
+                redis_mock,
             )
 
 

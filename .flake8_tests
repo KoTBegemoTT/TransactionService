@@ -1,5 +1,7 @@
 [flake8]
 ignore =
+    # Found wrong variable name: value
+    WPS110,
     # Found too short name
     WPS111,
     # Found underscored number name pattern
@@ -28,6 +30,8 @@ ignore =
     WPS319,
     # Found a line that starts with a dot
     WPS348,
+    # Found nested function
+    WPS430,
     # Found magic number
     WPS432,
     # Found block variables overlap: session

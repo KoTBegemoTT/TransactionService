@@ -7,14 +7,13 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
 
 from app.db.models import TransactionReport, TransactionType, UserTransaction
+from app.external.redis_client import RedisClient
 from app.transaction_service.schemas import (
     TransactionOutSchema,
     TransactionReportSchema,
     TransactionSchema,
 )
-
-transaction_report_cache: dict[str, list[TransactionOutSchema]] = {}
-transaction_type_id_cache: dict[str, int] = {}
+from app.utils import json_nested_dump, json_nested_load
 
 
 async def create_transation_type(
@@ -73,20 +72,23 @@ async def get_or_create_transaction_type(
 async def get_or_create_transaction_type_id(
     type_name: str,
     session: AsyncSession,
+    redis_client: RedisClient,
 ) -> int:
     """Получение id типа транзакции."""
     with global_tracer().start_active_span('get_or_create_transaction_type_id') as scope:  # noqa: E501
         scope.span.set_tag('type_name', type_name)
-        if type_name in transaction_type_id_cache:
-            type_id = transaction_type_id_cache[type_name]
+
+        type_id = redis_client.get_transaciton_type_id(type_name)
+        if type_id:
             scope.span.set_tag('transaction_type_id from cache', type_id)
-            return type_id
+            return int(type_id)
 
         transaction_type = await get_or_create_transaction_type(
             type_name,
             session,
         )
-        transaction_type_id_cache[type_name] = transaction_type.id
+
+        redis_client.set_transaciton_type_id(type_name, transaction_type.id)
 
         scope.span.set_tag(
             'transaction_type_id saved in cache',
@@ -122,6 +124,7 @@ async def create_user_transaction(
 async def create_transaction_view(
     transaction: TransactionSchema,
     session: AsyncSession,
+    redis_client: RedisClient,
 ) -> None:
     """Создание новой транзакции."""
     with global_tracer().start_active_span('create_transaction_view') as scope:
@@ -129,6 +132,7 @@ async def create_transaction_view(
         transaction_type_id = await get_or_create_transaction_type_id(
             transaction.transaction_type.value,
             session,
+            redis_client,
         )
 
         await create_user_transaction(
@@ -237,7 +241,8 @@ async def get_user_transactions_in_period(
 
 async def get_trasactions_form_cache(
     report: TransactionReportSchema,
-) -> list[TransactionOutSchema] | None:
+    redis_client: RedisClient,
+) -> str | None:
     """Поиск отчета о транзакциях."""
     with global_tracer().start_active_span('get_trasactions_form_cache') as scope:  # noqa: E501
         report_key = get_report_key(
@@ -247,32 +252,42 @@ async def get_trasactions_form_cache(
         )
 
         scope.span.set_tag('report_key', report_key)
-        return transaction_report_cache.get(report_key, None)
+        return redis_client.get_report_transaction(report_key)
 
 
 async def save_report_cache(
     report: TransactionReportSchema,
-    user_transactions: list[TransactionOutSchema],
+    user_transactions: str,
+    redis_client: RedisClient,
 ) -> None:
     """Сохранение отчета о транзакциях."""
     with global_tracer().start_active_span('save_report_cache'):
         report_key = get_report_key(
             report.user_id, report.date_start, report.date_end,
         )
-        transaction_report_cache[report_key] = user_transactions
+
+        redis_client.set_report_transaction(report_key, user_transactions)
 
 
 async def get_transactions_view(
     report: TransactionReportSchema,
     session: AsyncSession,
+    redis_client: RedisClient,
 ) -> list[TransactionOutSchema]:
     """Получение списка транзакций."""
     with global_tracer().start_active_span('get_transactions_view') as scope:
         scope.span.set_tag('report', str(report))
-        cashed_transactions = await get_trasactions_form_cache(report)
+        cashed_transactions = await get_trasactions_form_cache(
+            report,
+            redis_client,
+        )
         if cashed_transactions is not None:
-            scope.span.set_tag('cashed_transactions', str(cashed_transactions))
-            return cashed_transactions
+            loaded_transactions = json_nested_load(cashed_transactions)
+            scope.span.set_tag(
+                'cashed_transactions',
+                str(loaded_transactions),
+            )
+            return loaded_transactions
 
         user_transactions_orm = await get_user_transactions_in_period(
             report.user_id,
@@ -288,6 +303,8 @@ async def get_transactions_view(
         ]
 
         scope.span.set_tag('user_transactions_out', str(user_transactions_out))
-        await save_report_cache(report, user_transactions_out)
+
+        user_transaction_cashed = json_nested_dump(user_transactions_out)
+        await save_report_cache(report, user_transaction_cashed, redis_client)
 
         return user_transactions_out

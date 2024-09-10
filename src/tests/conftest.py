@@ -1,6 +1,7 @@
 import asyncio
 from datetime import datetime
 from typing import AsyncGenerator
+from unittest.mock import Mock
 
 import pytest
 import pytest_asyncio
@@ -11,10 +12,6 @@ from app.db.db_helper import db_helper as db_session_helper
 from app.db.models import BaseTable, TransactionType, User, UserTransaction
 from app.main import app
 from app.transaction_service.schemas import TransactionOutSchema
-from app.transaction_service.views import (
-    transaction_report_cache,
-    transaction_type_id_cache,
-)
 
 TEST_DB_URL = 'postgresql+asyncpg://postgres:postgres@host.docker.internal:5432/test_db'  # noqa: E501
 test_db_helper = DatabaseHelper(url=TEST_DB_URL, echo=True)
@@ -44,12 +41,6 @@ def event_loop(request):
     loop = asyncio.get_event_loop_policy().new_event_loop()
     yield loop
     loop.close()
-
-
-@pytest.fixture()
-def clear_cache() -> None:
-    transaction_report_cache.clear()
-    transaction_type_id_cache.clear()
 
 
 @pytest.fixture(scope='session')
@@ -112,3 +103,34 @@ async def user_and_transactions(
             TransactionOutSchema.model_validate(transaction_2),
         ]
         return user, tranactions
+
+
+def get_redis_mock() -> Mock:
+    redis_cashe: dict[str, int | str] = {}
+
+    def get_type_id(type_name: str):
+        return redis_cashe.get(f'tt_id:{type_name}', None)
+
+    def set_type_id(type_name: str, type_id: int):
+        redis_cashe[f'tt_id:{type_name}'] = type_id
+
+    def get_transaction(report_key: str):
+        return redis_cashe.get(report_key, None)
+
+    def set_report_transaction(report_key: str, value: str):
+        redis_cashe[f'report:{report_key}'] = value
+
+    redis_client = Mock()
+    redis_client.get_transaciton_type_id = get_type_id
+    redis_client.set_transaciton_type_id = set_type_id
+    redis_client.get_report_transaction = get_transaction
+    redis_client.set_report_transaction = set_report_transaction
+
+    redis_client.get_cash = lambda: redis_cashe
+
+    return redis_client
+
+
+@pytest.fixture
+def redis_mock() -> Mock:
+    return get_redis_mock()

@@ -5,6 +5,7 @@ from fastapi import FastAPI, status
 from starlette.middleware.base import BaseHTTPMiddleware
 
 from app.external.jaeger import initialize_jaeger_tracer
+from app.external.redis_client import get_redis_client
 from app.middleware import tracing_middleware
 from app.transaction_service.urls import router as transactions_router
 
@@ -13,7 +14,9 @@ from app.transaction_service.urls import router as transactions_router
 async def lifespan(app: FastAPI):
     """Настройка при запуске и остановке приложения."""
     initialize_jaeger_tracer()
+    redis_client = get_redis_client()
     yield
+    redis_client.close()
 
 
 app = FastAPI(lifespan=lifespan)

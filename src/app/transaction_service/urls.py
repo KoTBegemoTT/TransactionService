@@ -2,6 +2,7 @@ from fastapi import APIRouter, Depends, status
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.db.db_helper import db_helper
+from app.external.redis_client import RedisClient, get_redis_client
 from app.transaction_service.schemas import (
     TransactionOutSchema,
     TransactionReportSchema,
@@ -30,10 +31,11 @@ async def ready_check() -> None:
 )
 async def create_transaction(
     transaction: TransactionSchema,
+    redis_client: RedisClient = Depends(get_redis_client),
     session: AsyncSession = Depends(db_helper.scoped_session_dependency),
 ) -> None:
     """Создание новой транзакции."""
-    return await create_transaction_view(transaction, session)
+    return await create_transaction_view(transaction, session, redis_client)
 
 
 @router.post(
@@ -42,7 +44,12 @@ async def create_transaction(
 )
 async def get_transactions(
     transaction_report: TransactionReportSchema,
+    redis_client: RedisClient = Depends(get_redis_client),
     session: AsyncSession = Depends(db_helper.scoped_session_dependency),
 ) -> list[TransactionOutSchema]:
     """Получение списка транзакции."""
-    return await get_transactions_view(transaction_report, session)
+    return await get_transactions_view(
+        transaction_report,
+        session,
+        redis_client,
+    )

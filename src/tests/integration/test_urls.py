@@ -3,7 +3,6 @@ from datetime import datetime
 import pytest
 from fastapi import status
 
-from app.transaction_service.views import transaction_report_cache
 from tests.crud_for_test import get_user_transactions
 
 
@@ -15,7 +14,7 @@ from tests.crud_for_test import get_user_transactions
     ],
 )
 @pytest.mark.asyncio
-@pytest.mark.usefixtures('reset_db', 'clear_cache')
+@pytest.mark.usefixtures('reset_db')
 async def test_create_transaction(
     ac, user, amount, transaction_type, db_helper,
 ):
@@ -25,6 +24,7 @@ async def test_create_transaction(
             'user_id': user.id,
             'amount': amount,
             'transaction_type': transaction_type,
+            'redis_client': 'mock',
         },
     )
 
@@ -39,7 +39,7 @@ async def test_create_transaction(
 
 
 @pytest.mark.asyncio
-@pytest.mark.usefixtures('reset_db', 'clear_cache')
+@pytest.mark.usefixtures('reset_db')
 async def test_get_transactions(ac, user_and_transactions):
     user, transactions = user_and_transactions
 
@@ -54,7 +54,6 @@ async def test_get_transactions(ac, user_and_transactions):
 
     assert response.status_code == status.HTTP_201_CREATED
     assert len(response.json()) == len(transactions)
-    assert len(transaction_report_cache) == 1
 
 
 @pytest.mark.asyncio

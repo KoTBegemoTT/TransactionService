@@ -11,10 +11,16 @@ ignore =
     D107,
     # Found using `@staticmethod`
     WPS602,
+    # Found wrong module name
+    WPS100,
+    # Found wrong variable name: value
+    WPS110,
     # Found upper-case constant
     WPS115,
     # Found too many module members: 8 > 7
     WPS202,
+    # Found too many local variables
+    WPS210,
     # Found `f` string
     WPS305,
     # Found implicit `.get()` dict usage
@@ -27,5 +33,7 @@ ignore =
     WPS348,
     #  Found complex default value
     WPS404,
+    # Found unpythonic getter or setter
+    WPS615,
     # Do not perform function calls in argument defaults
     B008,
