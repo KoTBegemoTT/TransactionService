@@ -20,6 +20,7 @@
 
 - Исходный код проекта: src/app
 - Тесты src/tests
+- Helm чарты ./helm/api-gateway
 
 ## Применение миграций
 
