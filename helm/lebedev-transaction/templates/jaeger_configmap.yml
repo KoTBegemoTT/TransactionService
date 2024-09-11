@@ -1,9 +1,9 @@
 apiVersion: v1
 kind: ConfigMap
 metadata:
-  name: {{ .Values.jaeger_cofigmap.name }}
+  name: {{ .Values.jaeger_configmap.name }}
   labels:
     {{- include "lebedev-transaction.labels" . | nindent 4 }}
 data:
-  jaeger_agent_host: {{ .Values.jaeger_cofigmap.data.jaeger_agent_host }}
-  jaeger_agent_port: {{ .Values.jaeger_cofigmap.data.jaeger_agent_port | toString }}
+  jaeger_agent_host: {{ .Values.jaeger_configmap.data.jaeger_agent_host }}
+  jaeger_agent_port: {{ .Values.jaeger_configmap.data.jaeger_agent_port | toString }}

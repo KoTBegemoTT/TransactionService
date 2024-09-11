@@ -8,7 +8,7 @@ image:
   repository: kotbegemott/transaction_service
   pullPolicy: IfNotPresent
   # Overrides the image tag whose default is the chart appVersion.
-  tag: "6"
+  tag: "7"
 
 
 imagePullSecrets: []
@@ -111,7 +111,7 @@ tolerations: []
 
 affinity: {}
 
-db_cofigmap:
+db_configmap:
   name: lebedev-database-configmap
   data:
     db_host: "postgres-service"
@@ -125,10 +125,17 @@ db_secret:
     db_password: "cGFzc3dvcmQ="
     db_name: "bGViZWRldg=="
 
-jaeger_cofigmap:
+jaeger_configmap:
   name: lebedev-jaeger-configmap
   data:
     jaeger_agent_host: "infra-jaeger-agent"
     jaeger_agent_port: "'6831'"
+
+redis_configmap:
+  name: lebedev-redis-configmap
+  data:
+    redis_host: "redis-1"
+    redis_port: "'6379'"
+    redis_db_number: "'1'"
 
 service_name: 'lebedev-transaction-service'

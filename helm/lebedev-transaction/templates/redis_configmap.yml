@@ -1,0 +1,10 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{ .Values.redis_configmap.name }}
+  labels:
+    {{- include "lebedev-transaction.labels" . | nindent 4 }}
+data:
+  redis_host: {{ .Values.redis_configmap.data.redis_host}}
+  redis_port: {{ .Values.redis_configmap.data.redis_port}}
+  redis_db_number: {{ .Values.redis_configmap.data.redis_db_number}}
